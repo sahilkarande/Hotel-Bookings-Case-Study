@@ -1,8 +1,3 @@
-Here's a complete `README.md` file for your **Hotel Booking Case Study Project**, based on the detailed analysis from your report:
-
----
-
-```markdown
 # 🏨 Hotel Booking Case Study - Exploratory Data Analysis (EDA)
 
 ## 📌 Project Overview
