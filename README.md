@@ -1,5 +1,7 @@
 # 🏨 Hotel Booking Case Study - Exploratory Data Analysis (EDA)
 
+## Deployed Dashboard - https://hotelbookingscasestudy.streamlit.app/
+
 ## 📌 Project Overview
 
 This project performs a comprehensive **Exploratory Data Analysis (EDA)** on a hotel booking dataset to uncover patterns in guest behavior, pricing strategies, booking dynamics, and operational efficiency. The insights aim to improve revenue strategies and enhance customer satisfaction in the hospitality sector.
