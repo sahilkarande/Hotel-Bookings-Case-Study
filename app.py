@@ -138,10 +138,7 @@ df = load_data()
 # ----------------------------
 st.sidebar.header("🔎 Filter Options")
 
-# Reset filters button
-if st.sidebar.button("🔄 Reset Filters"):
-    st.session_state.clear()  # Clear session state variables if any
-    st.experimental_rerun()
+
 
 # Hotel Type Filter (multiselect)
 with st.sidebar.expander("🏨 Hotel Type", expanded=True):
