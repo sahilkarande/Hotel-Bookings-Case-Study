@@ -18,34 +18,29 @@ st.set_page_config(
 )
 
 # ----------------------------
-# Custom CSS for Sidebar and Global Styling
+# Custom CSS for Dark Theme & Sidebar
 # ----------------------------
 st.markdown("""
 <style>
-    /* Global text and background */
     body, .stApp, .main {
         background-color: #121212;
         color: #E0E0E0;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
-    /* Headings */
     h1, h2, h3, h4, h5, h6, .stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {
         color: #FFFFFF !important;
         font-weight: 700;
         text-shadow: none !important;
     }
 
-    /* Sidebar */
     .css-1d391kg, .st-bc {
         background-color: #1E1E1E;
         border-radius: 12px;
         padding: 20px;
-        box-shadow: none !important;
         color: #CCCCCC !important;
     }
 
-    /* Buttons */
     .stButton > button, .stDownloadButton > button {
         background-color: #000000 !important;
         border: 2px solid #1E90FF !important;
@@ -53,54 +48,44 @@ st.markdown("""
         border-radius: 8px !important;
         padding: 0.5em 1.2em !important;
         font-weight: 600 !important;
-        transition: background-color 0.3s ease, color 0.3s ease;
-        box-shadow: none !important;
     }
+
     .stButton > button:hover, .stDownloadButton > button:hover {
         background-color: #1E90FF !important;
         color: #000000 !important;
         cursor: pointer;
-        box-shadow: none !important;
     }
 
-    /* Inputs, sliders, selects: less round, compact height */
     .stRadio > div, .stMultiSelect > div, .stSlider > div, .stTextInput > div, .stSelectbox > div {
         background-color: #2A2A2A;
-        border-radius: 4px;          /* reduced from 8px */
-        padding: 4px 8px !important; /* reduced vertical padding */
+        border-radius: 4px;
+        padding: 4px 8px !important;
         color: #DDDDDD !important;
-        box-shadow: none !important;
-        min-height: 32px !important; /* reduce height */
         font-size: 14px !important;
     }
 
-    /* Scrollbar style */
     .stDataFrame > div > div {
         scrollbar-width: thin;
         scrollbar-color: #555555 #1E1E1E;
     }
+
     .stDataFrame > div > div::-webkit-scrollbar {
         width: 8px;
         height: 8px;
     }
-    .stDataFrame > div > div::-webkit-scrollbar-track {
-        background: #1E1E1E;
-    }
+
     .stDataFrame > div > div::-webkit-scrollbar-thumb {
         background-color: #555555;
         border-radius: 4px;
     }
 
-    /* Container padding & max width */
     .block-container {
         padding: 2rem !important;
         max-width: 1200px !important;
-        margin-left: auto !important;
-        margin-right: auto !important;
+        margin: auto;
     }
 </style>
 """, unsafe_allow_html=True)
-
 
 # ----------------------------
 # Load and Preprocess Dataset
@@ -108,7 +93,6 @@ st.markdown("""
 @st.cache_data
 def load_data():
     df = pd.read_csv("Assets/hotel_bookings.csv")
-
     df['agent'] = df['agent'].fillna(0).astype(int)
     df['children'] = df['children'].fillna(0)
     df['country'] = df['country'].fillna(df['country'].mode()[0])
@@ -134,90 +118,33 @@ def load_data():
 df = load_data()
 
 # ----------------------------
-# Sidebar Filters
+# Sidebar Filters (Collapsed by Default)
 # ----------------------------
 st.sidebar.header("🔎 Filter Options")
 
+with st.sidebar.expander("🏨 Hotel Type", expanded=False):
+    hotel_type = st.multiselect("Select hotel type(s):", options=df['hotel'].unique(), default=df['hotel'].unique())
 
+with st.sidebar.expander("🌍 Guest Country (Top 20)", expanded=False):
+    countries = st.multiselect("Select countries:", options=df['country'].value_counts().index[:20], default=df['country'].value_counts().index[:10])
 
-# Hotel Type Filter (multiselect)
-with st.sidebar.expander("🏨 Hotel Type", expanded=True):
-    hotel_type = st.multiselect(
-        "Select hotel type(s):",
-        options=df['hotel'].unique().tolist(),
-        default=df['hotel'].unique().tolist(),
-        help="Filter bookings by hotel type"
-    )
+with st.sidebar.expander("❌ Cancellation Status", expanded=False):
+    cancel_option = st.radio("Show bookings:", ['All', 'Canceled', 'Not Canceled'], index=0)
 
-# Guest Country Filter (top 20, searchable)
-with st.sidebar.expander("🌍 Guest Country (Top 20)", expanded=True):
-    countries = st.multiselect(
-        "Select countries:",
-        options=df['country'].value_counts().index[:20].tolist(),
-        default=df['country'].value_counts().index[:10].tolist(),
-        help="Top 20 guest countries by bookings"
-    )
+with st.sidebar.expander("👤 Customer Type", expanded=False):
+    customer_types = st.multiselect("Choose customer types:", options=df['customer_type'].unique(), default=df['customer_type'].unique())
 
-# Cancellation Status Radio
-with st.sidebar.expander("❌ Cancellation Status", expanded=True):
-    cancel_option = st.radio(
-        "Show bookings:",
-        options=['All', 'Canceled', 'Not Canceled'],
-        index=0,
-        help="Filter bookings by cancellation status"
-    )
-
-# Customer Type Filter
-with st.sidebar.expander("👤 Customer Type", expanded=True):
-    customer_types = st.multiselect(
-        "Choose customer types:",
-        options=df['customer_type'].unique().tolist(),
-        default=df['customer_type'].unique().tolist(),
-        help="Filter by customer type"
-    )
-
-# Market Segment Filter
 with st.sidebar.expander("📦 Market Segment", expanded=False):
-    segment_options = st.multiselect(
-        "Select market segments:",
-        options=df['market_segment'].unique().tolist(),
-        default=df['market_segment'].unique().tolist(),
-        help="Filter by market segment"
-    )
+    segment_options = st.multiselect("Select market segments:", options=df['market_segment'].unique(), default=df['market_segment'].unique())
 
-# Average Daily Rate Slider
-with st.sidebar.expander("💰 Average Daily Rate (ADR)", expanded=True):
-    min_adr = float(df['adr'].min())
-    max_adr = float(df['adr'].max())
-    min_adr_selected, max_adr_selected = st.slider(
-        "Select ADR range:",
-        min_value=round(min_adr, 2),
-        max_value=round(max_adr, 2),
-        value=(round(min_adr, 2), round(max_adr, 2)),
-        step=1.0,
-        help="Filter bookings by ADR (₹)"
-    )
+with st.sidebar.expander("💰 Advanced Filters", expanded=False):
+    min_adr, max_adr = float(df['adr'].min()), float(df['adr'].max())
+    min_adr_selected, max_adr_selected = st.slider("Select ADR range (₹):", min_value=round(min_adr, 2), max_value=round(max_adr, 2), value=(round(min_adr, 2), round(max_adr, 2)), step=1.0)
 
-    # Lead Time Range Slider
-    min_lt = int(df['lead_time'].min())
-    max_lt = int(df['lead_time'].max())
-    lead_time_range = st.slider(
-        "Lead Time (days):",
-        min_value=min_lt,
-        max_value=max_lt,
-        value=(min_lt, max_lt),
-        step=1,
-        help="Days between booking and arrival"
-    )
+    min_lt, max_lt = int(df['lead_time'].min()), int(df['lead_time'].max())
+    lead_time_range = st.slider("Lead Time (days):", min_value=min_lt, max_value=max_lt, value=(min_lt, max_lt), step=1)
 
-    # Room Change Filter
-    room_change_filter = st.selectbox(
-        "Room Changed?",
-        options=["All", "Yes", "No"],
-        index=0,
-        help="Filter if assigned room differs from reserved room"
-    )
-
+    room_change_filter = st.selectbox("Room Changed?", options=["All", "Yes", "No"], index=0)
 
 # ----------------------------
 # Apply Filters
@@ -227,10 +154,8 @@ filtered_df = df[
     (df['country'].isin(countries)) &
     (df['customer_type'].isin(customer_types)) &
     (df['market_segment'].isin(segment_options)) &
-    (df['adr'] >= min_adr_selected) &
-    (df['adr'] <= max_adr_selected) &
-    (df['lead_time'] >= lead_time_range[0]) &
-    (df['lead_time'] <= lead_time_range[1])
+    (df['adr'] >= min_adr_selected) & (df['adr'] <= max_adr_selected) &
+    (df['lead_time'] >= lead_time_range[0]) & (df['lead_time'] <= lead_time_range[1])
 ]
 
 if cancel_option == 'Canceled':
@@ -246,27 +171,63 @@ elif room_change_filter == 'No':
 # ----------------------------
 # Dashboard Header
 # ----------------------------
-st.title("🏨 Hotel Booking Analysis Dashboard")
-st.markdown("""
-This interactive dashboard provides insights into hotel booking trends, guest behavior,
-cancellation patterns, revenue generation, and other key performance metrics. Use the filters on the left
-to customize the visualizations and gain targeted insights.
-""")
-
 # ----------------------------
-# Key Metrics
+# Business Metrics (Blue-White Theme)
 # ----------------------------
 st.subheader("📌 Business Metrics Overview")
-col1, col2, col3, col4 = st.columns(4)
-col1.metric("Total Bookings", len(filtered_df))
-col2.metric("Average ADR", f"₹{filtered_df['adr'].mean():.2f}")
-col3.metric("Avg. Stay (Nights)", f"{filtered_df['total_stay_nights'].mean():.2f}")
-col4.metric("Revenue Generated", f"₹{filtered_df['revenue_generated'].sum():,.0f}")
 
+metric_style = """
+    <div style="background-color:#1e1e1e; padding:1rem; border-radius:12px; 
+                text-align:center; border:1px solid #2e2e2e;">
+        <h5 style="color:white;">{label}</h5>
+        <p style="font-size:24px; color:#1f77b4; font-weight:bold;">{value}</p>
+    </div>
+"""
+
+# First Row
+col1, col2, col3, col4 = st.columns(4)
+with col1:
+    st.markdown(metric_style.format(label="Total Bookings", value=f"{len(filtered_df):,}"), unsafe_allow_html=True)
+with col2:
+    st.markdown(metric_style.format(label="Average ADR", value=f"₹{filtered_df['adr'].mean():.2f}"), unsafe_allow_html=True)
+with col3:
+    st.markdown(metric_style.format(label="Avg. Stay (Nights)", value=f"{filtered_df['total_stay_nights'].mean():.2f}"), unsafe_allow_html=True)
+with col4:
+    st.markdown(metric_style.format(label="Revenue Generated", value=f"₹{filtered_df['revenue_generated'].sum():,.0f}"), unsafe_allow_html=True)
+st.markdown("---")  # Separator line for clarity
+# Second Row
 col5, col6, col7 = st.columns(3)
-col5.metric("Total Guests", int(filtered_df['total_members'].sum()))
-col6.metric("Cancellation Rate", f"{filtered_df['is_canceled'].mean() * 100:.1f}%")
-col7.metric("Room Reassignments", f"{filtered_df['room_change'].mean() * 100:.1f}%")
+with col5:
+    st.markdown(metric_style.format(label="Total Guests", value=f"{int(filtered_df['total_members'].sum()):,}"), unsafe_allow_html=True)
+with col6:
+    st.markdown(metric_style.format(label="Cancellation Rate", value=f"{filtered_df['is_canceled'].mean() * 100:.1f}%"), unsafe_allow_html=True)
+with col7:
+    st.markdown(metric_style.format(label="Room Reassignments", value=f"{filtered_df['room_change'].mean() * 100:.1f}%"), unsafe_allow_html=True)
+
+# ----------------------------
+# Date Range Display
+# ----------------------------
+# ----------------------------
+# Booking Date Range Metric (Custom Styled)
+# ----------------------------
+min_date = filtered_df['arrival_date'].min().date()
+max_date = filtered_df['arrival_date'].max().date()
+
+with st.container():
+    st.markdown("""
+    <div style='
+        background-color: #1e1e1e;
+        padding: 1.2rem 1.5rem;
+        border-radius: 12px;
+        text-align: center;
+        margin-top: 1.5rem;
+        border: 1px solid #444;
+        '>
+        <h4 style='color:#ffffff;'>📅 Booking Date Range</h4>
+        <p style='font-size: 20px; font-weight: 600; color: #00BFFF;'>{} <span style='color:#888;'>to</span> {}</p>
+    </div>
+    """.format(min_date.strftime("%d %b %Y"), max_date.strftime("%d %b %Y")),
+    unsafe_allow_html=True)
 
 # ----------------------------
 # Statistical Summary
@@ -280,7 +241,7 @@ st.markdown("""
 """)
 
 # ----------------------------
-# Data Preview
+# Filtered Data Preview
 # ----------------------------
 st.subheader("🗃️ Filtered Data Preview")
 st.dataframe(filtered_df.head(100), use_container_width=True)
@@ -292,49 +253,39 @@ st.subheader("📊 Visual Insights")
 
 with st.container():
     st.markdown("#### 🏨 Bookings by Hotel Type")
-    hotel_counts = filtered_df['hotel'].value_counts().reset_index()
-    hotel_counts.columns = ['Hotel Type', 'Bookings']
-    st.bar_chart(hotel_counts.set_index('Hotel Type'))
+    st.bar_chart(filtered_df['hotel'].value_counts())
 
     st.markdown("#### 🌍 Top 10 Countries by Booking Count")
-    top_countries = filtered_df['country'].value_counts().head(10).reset_index()
-    top_countries.columns = ['Country', 'Bookings']
-    st.bar_chart(top_countries.set_index('Country'))
+    st.bar_chart(filtered_df['country'].value_counts().head(10))
 
 with st.container():
     st.markdown("#### 📅 Arrival Day Distribution")
-    day_distribution = filtered_df['arrival_day_name'].value_counts().reset_index()
-    day_distribution.columns = ['Day', 'Bookings']
-    st.bar_chart(day_distribution.set_index('Day'))
+    st.bar_chart(filtered_df['arrival_day_name'].value_counts())
 
     st.markdown("#### 💰 ADR (Average Daily Rate) Distribution")
-    adr_data = filtered_df['adr'].value_counts().sort_index().reset_index()
-    adr_data.columns = ['ADR', 'Frequency']
-    st.area_chart(adr_data.set_index('ADR'))
+    st.area_chart(filtered_df['adr'].value_counts().sort_index())
 
 with st.container():
     st.markdown("#### 🧾 Revenue Trend by Stay Duration")
-    stay_revenue = filtered_df.groupby('total_stay_nights')[['revenue_generated']].sum().reset_index()
-    st.line_chart(stay_revenue.set_index('total_stay_nights'))
+    stay_revenue = filtered_df.groupby('total_stay_nights')['revenue_generated'].sum()
+    st.line_chart(stay_revenue)
 
     st.markdown("#### 🔄 Lead Time vs Booking Changes")
-    lead_changes = filtered_df.groupby('lead_time')['booking_changes'].mean().reset_index()
-    st.line_chart(lead_changes.set_index('lead_time'))
+    lead_changes = filtered_df.groupby('lead_time')['booking_changes'].mean()
+    st.line_chart(lead_changes)
 
 with st.container():
     st.markdown("#### 📈 ADR by Customer Type")
-    adr_customer = filtered_df.groupby('customer_type')[['adr']].mean().reset_index()
-    st.bar_chart(adr_customer.set_index('customer_type'))
+    adr_customer = filtered_df.groupby('customer_type')['adr'].mean()
+    st.bar_chart(adr_customer)
 
     st.markdown("#### 📈 Cancellation Rate by Customer Type")
-    cancel_rate = filtered_df.groupby('customer_type')['is_canceled'].mean().reset_index()
-    cancel_rate.columns = ['customer_type', 'Cancellation Rate']
-    st.bar_chart(cancel_rate.set_index('customer_type'))
+    cancel_rate = filtered_df.groupby('customer_type')['is_canceled'].mean()
+    st.bar_chart(cancel_rate)
 
     st.markdown("#### ⏱️ Average Lead Time by Market Segment")
-    lead_market = filtered_df.groupby('market_segment')['lead_time'].mean().reset_index()
-    lead_market.columns = ['market_segment', 'Avg Lead Time']
-    st.bar_chart(lead_market.set_index('market_segment'))
+    lead_market = filtered_df.groupby('market_segment')['lead_time'].mean()
+    st.bar_chart(lead_market)
 
 # ----------------------------
 # Download Option
