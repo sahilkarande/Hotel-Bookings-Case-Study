@@ -303,7 +303,9 @@ st.download_button(
 # ----------------------------
 # Footer
 # ----------------------------
+st.markdown("---")
 st.markdown("""
----
-<p style='text-align:center; color: #F0F8FF;'>Made with ❤️ by <b>Sahil Karande</b></p>
+<div style='text-align: center;'>
+    <sub>📌 Built with ❤️ by <strong>Sahil Karande</strong> | CDAC Mumbai - DBDA | Streamlit v1.45</sub>
+</div>
 """, unsafe_allow_html=True)
